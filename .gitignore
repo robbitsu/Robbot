@@ -1,0 +1,8 @@
+secret.py
+.env
+.venv
+.vscode
+.git
+__pycache__/
+.pytest_cache/
+bot/

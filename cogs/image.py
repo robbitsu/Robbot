@@ -52,14 +52,35 @@ def make_mini_emoji_image(avatar_bytes, output_path="mini_emoji.png"):
         emoji_bytes = f.read()
     return emoji_bytes
 
-def generate_petpet_webp(avatar_bytes, petpet_gif_path, output_filename="petpet.webp"):
-    with Image.open(BytesIO(avatar_bytes)).convert("RGBA") as avatar_im:
-        avatar_im = avatar_im.resize((112, 112), Image.LANCZOS)
+def generate_petpet_webp(image_bytes, petpet_gif_path, output_filename="petpet.webp"):
+    """
+    Generates a 'petpet' style animated webp using any generic image (not just avatars).
+    The input image will be resized and animated with the petpet hand gif.
+
+    Args:
+        image_bytes (bytes): The bytes of the input image (any format supported by PIL).
+        petpet_gif_path (str): Path to the petpet hand gif.
+        output_filename (str): Output filename (not used, output is returned as BytesIO).
+
+    Returns:
+        BytesIO: The resulting animated webp image.
+    """
+    from io import BytesIO
+    import math
+
+    with Image.open(BytesIO(image_bytes)).convert("RGBA") as input_im:
+        # Resize input image to fit in 112x112 box, preserving aspect ratio and centering
+        base_size = (112, 112)
+        input_im.thumbnail(base_size, Image.LANCZOS)
+        avatar_im = Image.new("RGBA", base_size, (0, 0, 0, 0))
+        paste_x = (base_size[0] - input_im.width) // 2
+        paste_y = (base_size[1] - input_im.height) // 2
+        avatar_im.paste(input_im, (paste_x, paste_y), input_im)
+
         with Image.open(petpet_gif_path) as petpet_gif:
             frames = []
             durations = []
             n_frames = petpet_gif.n_frames if hasattr(petpet_gif, "n_frames") else sum(1 for _ in ImageSequence.Iterator(petpet_gif))
-            import math
             for i, frame in enumerate(ImageSequence.Iterator(petpet_gif)):
                 frame = frame.convert("RGBA")
                 t = i / (n_frames - 1) if n_frames > 1 else 0
@@ -67,14 +88,13 @@ def generate_petpet_webp(avatar_bytes, petpet_gif_path, output_filename="petpet.
                 min_scale = 0.7
                 scale_y = 1 - (1 - min_scale) * squish
                 scale_x = 1 + (1 - scale_y)
-                squished_avatar = avatar_im.resize((int(112 * scale_x), int(112 * scale_y)), Image.LANCZOS)
-                avatar_layer = Image.new("RGBA", (112, 112), (0, 0, 0, 0))
-                paste_x = (112 - squished_avatar.width) // 2
-                # Anchor the squish on the bottom: paste_y is the distance from the top so that the bottom aligns
-                paste_y = 112 - squished_avatar.height
-                avatar_layer.paste(squished_avatar, (paste_x, paste_y), squished_avatar)
+                squished_img = avatar_im.resize((int(112 * scale_x), int(112 * scale_y)), Image.LANCZOS)
+                img_layer = Image.new("RGBA", (112, 112), (0, 0, 0, 0))
+                paste_x = (112 - squished_img.width) // 2
+                paste_y = 112 - squished_img.height
+                img_layer.paste(squished_img, (paste_x, paste_y), squished_img)
                 base = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
-                base.paste(avatar_layer, (8, 16), avatar_layer)
+                base.paste(img_layer, (8, 16), img_layer)
                 base.alpha_composite(frame)
                 frames.append(base)
                 durations.append(frame.info.get("duration", petpet_gif.info.get("duration", 20)))
