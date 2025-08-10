@@ -50,53 +50,6 @@ class Tricks(commands.Cog):
             else:
                 await ctx.send(f"{babble_result}")
 
-    # Command to imitate a specific user with a specified message by copying their profile picture and name
-    @commands.hybrid_command(
-        name="imitate",
-        description="Imitate a user by sending a message as them (bot will copy their name and avatar)"
-    )
-    async def imitate(self, ctx: commands.Context, user: discord.Member, *, message: str):
-        # Only allow the command in guilds
-        if not ctx.guild:
-            await ctx.send("This command can only be used in a server.")
-            return
-
-        # Check bot permissions
-        if not ctx.channel.permissions_for(ctx.guild.me).send_messages:
-            await ctx.send("I don't have permission to send messages in this channel.")
-            return
-        if not ctx.channel.permissions_for(ctx.guild.me).manage_webhooks:
-            await ctx.send("I need the 'Manage Webhooks' permission to imitate users.")
-            return
-
-        # Find or create a webhook for this channel
-        webhooks = await ctx.channel.webhooks()
-        webhook = None
-        for wh in webhooks:
-            if wh.user == ctx.guild.me:
-                webhook = wh
-                break
-        if webhook is None:
-            webhook = await ctx.channel.create_webhook(name="Imitator")
-
-        # Use the user's display name and avatar (prefer server avatar)
-        avatar_url = user.guild_avatar.url if hasattr(user, "guild_avatar") and user.guild_avatar else (user.avatar.url if user.avatar else user.default_avatar.url)
-        display_name = user.display_name
-
-        # Send the message as the user
-        await webhook.send(
-            content=message,
-            username=display_name,
-            avatar_url=avatar_url,
-            wait=True
-        )
-
-        # Optionally, delete the command invocation for stealth
-        try:
-            await ctx.message.delete()
-        except Exception:
-            pass  # Ignore if can't delete
-
 
 async def setup(bot):
     await bot.add_cog(Tricks(bot))
