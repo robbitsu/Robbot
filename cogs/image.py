@@ -232,21 +232,22 @@ class ImageCog(commands.Cog):
         user = user or ctx.author
 
         # Download the user's avatar as bytes
-        avatar_url = user.display_avatar.replace(format="png", size=128).url
-        async with aiohttp.ClientSession() as session:
-            async with session.get(avatar_url) as resp:
-                if resp.status != 200:
-                    await ctx.send("Failed to download avatar.", ephemeral=True)
-                    return
-                avatar_bytes = await resp.read()
+        async with ctx.typing():
+            avatar_url = user.display_avatar.replace(format="png", size=128).url
+            async with aiohttp.ClientSession() as session:
+                async with session.get(avatar_url) as resp:
+                    if resp.status != 200:
+                        await ctx.send("Failed to download avatar.", ephemeral=True)
+                        return
+                    avatar_bytes = await resp.read()
 
-        petpet_path = os.path.join(os.path.dirname(__file__), "petpet-transparent.gif")
-        if not os.path.exists(petpet_path):
-            await ctx.send("petpet-transparent.gif not found in cog directory.", ephemeral=True)
-            return
-        output = generate_petpet_webp(avatar_bytes, petpet_path)
-        file = discord.File(fp=output, filename="petpet.webp")
-        await ctx.send(file=file)
+            petpet_path = os.path.join(os.path.dirname(__file__), "petpet-transparent.gif")
+            if not os.path.exists(petpet_path):
+                await ctx.send("petpet-transparent.gif not found in cog directory.", ephemeral=True)
+                return
+            output = generate_petpet_webp(avatar_bytes, petpet_path)
+            file = discord.File(fp=output, filename="petpet.webp")
+            await ctx.send(file=file)
 
 async def setup(bot):
     await bot.add_cog(ImageCog(bot)) 
