@@ -12,7 +12,7 @@ else:
     TOKEN = os.getenv('TOKEN')
 
 # Test commit to see if Dokploy will auto-deploy
-print("Hello world! Again!")
+print("Hello world! Again! And again!")
 
 # Configure logging
 logging.basicConfig(
