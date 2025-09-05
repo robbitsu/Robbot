@@ -11,6 +11,9 @@ if os.path.exists('secret.py'):
 else:
     TOKEN = os.getenv('TOKEN')
 
+# Test commit to see if Dokploy will auto-deploy
+print("Hello world!")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
