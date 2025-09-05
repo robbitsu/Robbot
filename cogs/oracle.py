@@ -1,8 +1,15 @@
 from openai import OpenAI
 import discord
 from discord.ext import commands
-from cogs.ai_secret import AI_SECRET, BASE_URL
 import asyncio
+import os
+
+# If ai_secret.py exists, import it and use the AI_SECRET and BASE_URL variables
+if os.path.exists('ai_secret.py'):
+    from ai_secret import AI_SECRET, BASE_URL
+else:
+    AI_SECRET = os.getenv('AI_SECRET')
+    BASE_URL = os.getenv('BASE_URL')
 
 system_prompt = "You are the oracle. You are a wise and all-knowing being. You are able to answer any question. Your responses are short and to the point. Your responses are ominous and cryptic."
 
