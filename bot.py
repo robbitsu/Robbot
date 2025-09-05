@@ -1,10 +1,15 @@
 import discord
 from discord.ext import commands
 from discord.app_commands import AppCommandContext
-from secret import TOKEN
 import os
 import asyncio
 import logging
+
+# If secret.py exists, import it and use the TOKEN variable
+if os.path.exists('secret.py'):
+    from secret import TOKEN
+else:
+    TOKEN = os.getenv('TOKEN')
 
 # Configure logging
 logging.basicConfig(
