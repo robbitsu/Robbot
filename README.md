@@ -22,22 +22,47 @@ Robbot is a modular, feature-rich Discord bot built with [discord.py](https://di
    cd Robbot
    ```
 
-2. **Install dependencies**
-   Ensure you have Python 3.8+ and pip installed. Then run:
+2. **Install dependencies (Local Python)**
+   Ensure you have Python 3.13+ and pip installed. Then run:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure your bot token**
-   - Create a `secret.py` file in the project root with the following content:
-     ```python
-     TOKEN = "your-discord-bot-token"
-     ```
+3. **Configure your bot token and AI keys**
+   - **Option 1: Using `secret.py` and `ai_secret.py` files**
+     - Create a `secret.py` file in the project root with the following content:
+       ```python
+       TOKEN = "your-discord-bot-token"
+       ```
+     - (Optional, for Oracle cog) Create an `ai_secret.py` file in the project root:
+       ```python
+       AI_SECRET = "your-openai-api-key"
+       BASE_URL = "your-openai-base-url"
+       ```
+   - **Option 2: Using environment variables**
+     - Set the following environment variables before running the bot:
+       - `TOKEN` (required): Your Discord bot token
+       - `AI_SECRET` (optional): Your OpenAI API key (for Oracle cog)
+       - `BASE_URL` (optional): Your OpenAI base URL (for Oracle cog)
 
 4. **Run the bot**
-   ```bash
-   python bot.py
-   ```
+   - **Locally:**
+     ```bash
+     python bot.py
+     ```
+   - **With Docker:**
+     1. Build the Docker image:
+        ```bash
+        docker build -t robbot .
+        ```
+     2. Run the bot container, passing environment variables as needed:
+        ```bash
+        docker run -e TOKEN=your-discord-bot-token \
+                   -e AI_SECRET=your-openai-api-key \
+                   -e BASE_URL=your-openai-base-url \
+                   robbot
+        ```
+     - You can omit `AI_SECRET` and `BASE_URL` if you do not use the Oracle cog.
 
 ## Usage
 
