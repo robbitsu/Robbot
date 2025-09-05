@@ -6,3 +6,4 @@ secret.py
 __pycache__/
 .pytest_cache/
 bot/
+ai_secret.py

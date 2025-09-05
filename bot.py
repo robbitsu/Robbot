@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.app_commands import AppCommandContext
 from secret import TOKEN
 import os
 import asyncio
@@ -17,7 +18,7 @@ logger = logging.getLogger('discord_bot')
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='!', intents=intents, slash_commands=True)
+bot = commands.Bot(command_prefix='!', intents=intents, slash_commands=True, allowed_contexts=AppCommandContext(guild=True, dm_channel=True, private_channel=True))
 
 @bot.event
 async def on_ready():
@@ -26,6 +27,8 @@ async def on_ready():
     
 async def load_extensions():
     for filename in os.listdir('./cogs'):
+        if filename.find('secret') != -1:
+            continue
         if filename.endswith('.py'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
             print(f"Loaded {filename[:-3]}")
@@ -37,6 +40,8 @@ async def reload_cogs(ctx):
     try:
         # Unload all extensions
         for filename in os.listdir('./cogs'):
+            if filename.find('secret') != -1:
+                continue
             if filename.endswith('.py'):
                 await bot.unload_extension(f'cogs.{filename[:-3]}')
         
