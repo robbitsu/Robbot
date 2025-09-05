@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.venv/
+venv/
+env/
+*.db
+*.sqlite3
+*.log
+bot/Lib/site-packages/
+bot/Include/
+bot/Scripts/
+bot/pyvenv.cfg
