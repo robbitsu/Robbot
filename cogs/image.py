@@ -218,34 +218,53 @@ class ImageCog(commands.Cog):
 
         await ctx.send(f"Emoji :mini_{user.name}: added to the server! {str(emoji)}", ephemeral=True)
 
-    # Take a user's profile picture and make it a gif with petpet-transparent.gif overlaid on top of it
+    # Take a user's profile picture or image URL and make it a gif with petpet-transparent.gif overlaid on top of it
     @commands.hybrid_command(
         name="petpet",
-        description="Overlay the petpet hand gif on a user's avatar to make a petpet webp"
+        description="Overlay the petpet hand gif on a user's avatar or image URL to make a petpet webp"
     )
-    async def petpet(self, ctx: commands.Context, user: discord.Member = None):
+    async def petpet(self, ctx: commands.Context, target: str = None):
         """
-        Overlay the petpet hand gif on a user's avatar to make a petpet animated webp.
-        The avatar will squish once across the entire loop.
+        Overlay the petpet hand gif on a user's avatar or image URL to make a petpet animated webp.
+        The image will squish once across the entire loop.
+        
+        Args:
+            target: Either a user mention/ID or an image URL. If not provided, uses your avatar.
         """
 
-        user = user or ctx.author
+        image_url = None
+        
+        # If no target provided, use author's avatar
+        if target is None:
+            image_url = ctx.author.display_avatar.replace(format="png", size=128).url
+        else:
+            # Check if target is a URL
+            if target.startswith(('http://', 'https://')):
+                image_url = target
+            else:
+                # Try to convert to a user
+                try:
+                    # Try to get user by mention or ID
+                    user = await commands.MemberConverter().convert(ctx, target)
+                    image_url = user.display_avatar.replace(format="png", size=128).url
+                except commands.BadArgument:
+                    await ctx.send("Invalid user or URL provided.", ephemeral=True)
+                    return
 
-        # Download the user's avatar as bytes
+        # Download the image as bytes
         async with ctx.typing():
-            avatar_url = user.display_avatar.replace(format="png", size=128).url
             async with aiohttp.ClientSession() as session:
-                async with session.get(avatar_url) as resp:
+                async with session.get(image_url) as resp:
                     if resp.status != 200:
-                        await ctx.send("Failed to download avatar.", ephemeral=True)
+                        await ctx.send("Failed to download image.", ephemeral=True)
                         return
-                    avatar_bytes = await resp.read()
+                    image_bytes = await resp.read()
 
             petpet_path = os.path.join(os.path.dirname(__file__), "petpet-transparent.gif")
             if not os.path.exists(petpet_path):
                 await ctx.send("petpet-transparent.gif not found in cog directory.", ephemeral=True)
                 return
-            output = generate_petpet_webp(avatar_bytes, petpet_path)
+            output = generate_petpet_webp(image_bytes, petpet_path)
             file = discord.File(fp=output, filename="petpet.webp")
             await ctx.send(file=file)
 
