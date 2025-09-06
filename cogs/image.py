@@ -223,33 +223,30 @@ class ImageCog(commands.Cog):
         name="petpet",
         description="Overlay the petpet hand gif on a user's avatar or image URL to make a petpet webp"
     )
-    async def petpet(self, ctx: commands.Context, target: str = None):
+    async def petpet(self, ctx: commands.Context, target_user: discord.Member = None, target_url: str = None):
         """
         Overlay the petpet hand gif on a user's avatar or image URL to make a petpet animated webp.
         The image will squish once across the entire loop.
         
         Args:
-            target: Either a user mention/ID or an image URL. If not provided, uses your avatar.
+            target_user: A user whose avatar to use. If not provided and no URL given, uses your avatar.
+            target_url: An image URL to use instead of a user's avatar.
         """
 
         image_url = None
         
-        # If no target provided, use author's avatar
-        if target is None:
-            image_url = ctx.author.display_avatar.replace(format="png", size=128).url
-        else:
-            # Check if target is a URL
-            if target.startswith(('http://', 'https://')):
-                image_url = target
+        # Priority: URL > User > Author's avatar
+        if target_url is not None:
+            if target_url.startswith(('http://', 'https://')):
+                image_url = target_url
             else:
-                # Try to convert to a user
-                try:
-                    # Try to get user by mention or ID
-                    user = await commands.MemberConverter().convert(ctx, target)
-                    image_url = user.display_avatar.replace(format="png", size=128).url
-                except commands.BadArgument:
-                    await ctx.send("Invalid user or URL provided.", ephemeral=True)
-                    return
+                await ctx.send("Invalid URL provided. URL must start with http:// or https://", ephemeral=True)
+                return
+        elif target_user is not None:
+            image_url = target_user.display_avatar.replace(format="png", size=128).url
+        else:
+            # Use author's avatar as default
+            image_url = ctx.author.display_avatar.replace(format="png", size=128).url
 
         # Download the image as bytes
         async with ctx.typing():
