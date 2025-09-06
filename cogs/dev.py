@@ -71,17 +71,6 @@ class Dev(commands.Cog):
             await emoji.delete()
         
         await ctx.send("Emojis purged.", ephemeral=True)
-    
-    # Pull the latest changes from the repository
-    @commands.hybrid_command(name="pull", description="Pull the latest changes from the repository")
-    async def pull(self, ctx: commands.Context):
-        """Pull the latest changes from the repository."""
-        await ctx.send("Pulling latest changes...")
-        os.system("git pull")
-        await ctx.send("Pull complete.")
-
-        # Restart bot by using os.exec
-        os.execv(sys.executable, ['python', 'bot.py'])
         
 
 async def setup(bot):
