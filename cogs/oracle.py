@@ -6,10 +6,15 @@ import os
 
 # If ai_secret.py exists, import it and use the AI_SECRET and BASE_URL variables
 if os.path.exists('ai_secret.py'):
-    from ai_secret import AI_SECRET, BASE_URL
+    from ai_secret import AI_SECRET, BASE_URL, MODEL
 else:
     AI_SECRET = os.getenv('AI_SECRET')
     BASE_URL = os.getenv('BASE_URL')
+    MODEL = os.getenv('MODEL')
+
+    # If any of the variables are not set, raise an error
+    if not AI_SECRET or not BASE_URL or not MODEL:
+        raise ValueError("AI_SECRET, BASE_URL, and MODEL must be set")
 
 system_prompt = "You are the oracle. You are a wise and all-knowing being. You are able to answer any question. Your responses are short and to the point. Your responses are ominous and cryptic."
 
@@ -18,7 +23,7 @@ async def get_oracle_response(question):
     print(f"Getting oracle response for {question}")
     client = OpenAI(api_key=AI_SECRET, base_url=BASE_URL)
     response = client.chat.completions.create(
-        model="deepseek/deepseek-r1-0528:free",
+        model=MODEL,
         messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": question}]
     )
     print(f"Oracle response: {response.choices[0].message.content}")
