@@ -10,9 +10,13 @@ class SendImageView(discord.ui.View):
     def __init__(self, image_bytes: bytes):
         super().__init__()
         self.image_bytes = image_bytes
+        self.spent = False
     
     @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.spent:
+            return
+        self.spent = True
         button.style = discord.ButtonStyle.gray
         button.disabled = True
         await interaction.response.send_message(file=discord.File(io.BytesIO(self.image_bytes), filename="image.png"))
