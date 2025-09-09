@@ -3,6 +3,7 @@ import googletrans
 import random
 from discord.ext import commands
 import aiohttp
+import io
 
 # View for a button that sends an image (which is passed as an argument) to the channel
 class SendImageView(discord.ui.View):
@@ -14,7 +15,7 @@ class SendImageView(discord.ui.View):
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         button.style = discord.ButtonStyle.gray
         button.disabled = True
-        await interaction.response.send_message(file=discord.File(self.image_bytes))
+        await interaction.response.send_message(file=discord.File(io.BytesIO(self.image_bytes), filename="image.png"))
         await interaction.followup.edit_message(interaction.message.id, view=self)
 
 class Tricks(commands.Cog):
