@@ -3,6 +3,19 @@ import googletrans
 import random
 from discord.ext import commands
 
+# View for a button that sends an image (which is passed as an argument) to the channel
+class SendImageView(discord.ui.View):
+    def __init__(self, image_url: str):
+        super().__init__()
+        self.image_url = image_url
+    
+    @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
+    async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        button.style = discord.ButtonStyle.gray
+        button.disabled = True
+        await interaction.response.send_message(file=discord.File(self.image_url))
+        await interaction.followup.edit_message(interaction.message.id, view=self)
+
 class Tricks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -49,6 +62,10 @@ class Tricks(commands.Cog):
                 await ctx.send(f"{babble_result}\n\n**Translation steps:**\n{steps_display}")
             else:
                 await ctx.send(f"{babble_result}")
+
+    @commands.hybrid_command(name="surprise", description="Surprise someone with an image")
+    async def surprise(self, ctx: commands.Context, image_url: str):
+        await ctx.send(f"There's a surprise for you!", view=SendImageView(image_url))
 
 
 async def setup(bot):
