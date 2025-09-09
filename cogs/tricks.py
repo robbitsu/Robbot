@@ -21,18 +21,13 @@ def detect_file_type(image_bytes: bytes):
 # View for a button that sends an image (which is passed as an argument) to the channel
 class SendImageView(discord.ui.View):
     def __init__(self, image_bytes: bytes):
-        super().__init__()
+        super().__init__(timeout=None)
         self.image_bytes = image_bytes
         self.spent = False
         # Detect if the image is a GIF by checking the header
         self.filename = f"image.{detect_file_type(image_bytes)}"
 
     # When expired, change the button to a disabled button
-    def on_timeout(self):
-        self.spent = True
-        self.send_image_button.style = discord.ButtonStyle.gray
-        self.send_image_button.disabled = True
-        return super().on_timeout()
     
     @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
