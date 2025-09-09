@@ -4,30 +4,17 @@ import random
 from discord.ext import commands
 import aiohttp
 import io
-
-def detect_file_type(image_bytes: bytes):
-    if image_bytes.startswith(b'\x89PNG'):
-        return "png"
-    elif image_bytes.startswith(b'GIF87a') or image_bytes.startswith(b'GIF89a'):
-        return "gif"
-    # JPEGs check bits 6 through 10
-    elif image_bytes[6:10] == b'JFIF':
-        return "jpg"
-    elif image_bytes.startswith(b'WEBP'):
-        return "webp"
-    else:
-        return "unknown"
+import os
+from urllib.parse import urlparse
 
 # View for a button that sends an image (which is passed as an argument) to the channel
 class SendImageView(discord.ui.View):
-    def __init__(self, image_bytes: bytes):
+    def __init__(self, image_bytes: bytes, filename: str):
         super().__init__(timeout=None)
         self.image_bytes = image_bytes
         self.spent = False
-        # Detect if the image is a GIF by checking the header
-        self.filename = f"image.{detect_file_type(image_bytes)}"
+        self.filename = filename
 
-    # When expired, change the button to a disabled button
     
     @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -95,7 +82,15 @@ class Tricks(commands.Cog):
                         await ctx.send("Failed to download image.", ephemeral=True)
                         return
                     image_bytes = await resp.read()
-        await ctx.send(f"There's a surprise for you!", view=SendImageView(image_bytes))
+        # Extract file extension from URL
+        parsed_url = urlparse(image_url)
+        file_name = os.path.basename(parsed_url.path)
+        if '.' in file_name:
+            ext = file_name.split('.')[-1]
+        else:
+            ext = 'png'  # fallback if no extension
+        filename = f"image.{ext}"
+        await ctx.send(f"There's a surprise for you!", view=SendImageView(image_bytes, filename))
 
 
 async def setup(bot):
