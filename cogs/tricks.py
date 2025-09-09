@@ -5,6 +5,19 @@ from discord.ext import commands
 import aiohttp
 import io
 
+def detect_file_type(image_bytes: bytes):
+    if image_bytes.startswith(b'\x89PNG'):
+        return "png"
+    elif image_bytes.startswith(b'GIF87a') or image_bytes.startswith(b'GIF89a'):
+        return "gif"
+    # JPEGs check bits 6 through 10
+    elif image_bytes[6:10] == b'JFIF':
+        return "jpg"
+    elif image_bytes.startswith(b'WEBP'):
+        return "webp"
+    else:
+        return "unknown"
+
 # View for a button that sends an image (which is passed as an argument) to the channel
 class SendImageView(discord.ui.View):
     def __init__(self, image_bytes: bytes):
@@ -12,10 +25,14 @@ class SendImageView(discord.ui.View):
         self.image_bytes = image_bytes
         self.spent = False
         # Detect if the image is a GIF by checking the header
-        if image_bytes[:6] in (b'GIF87a', b'GIF89a'):
-            self.filename = "image.gif"
-        else:
-            self.filename = "image.png"
+        self.filename = f"image.{detect_file_type(image_bytes)}"
+
+    # When expired, change the button to a disabled button
+    def on_timeout(self):
+        self.spent = True
+        self.send_image_button.style = discord.ButtonStyle.gray
+        self.send_image_button.disabled = True
+        return super().on_timeout()
     
     @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -83,6 +100,10 @@ class Tricks(commands.Cog):
                         await ctx.send("Failed to download image.", ephemeral=True)
                         return
                     image_bytes = await resp.read()
+                    # Verify that this is an image (or gif)
+                    if (not image_bytes.startswith(b'\x89PNG')) and (not image_bytes.startswith(b'GIF87a')) and (not image_bytes.startswith(b'GIF89a')):
+                        await ctx.send("This is not an image or GIF.", ephemeral=True)
+                        return
         await ctx.send(f"There's a surprise for you!", view=SendImageView(image_bytes))
 
 
