@@ -2,18 +2,19 @@ import discord
 import googletrans
 import random
 from discord.ext import commands
+import aiohttp
 
 # View for a button that sends an image (which is passed as an argument) to the channel
 class SendImageView(discord.ui.View):
-    def __init__(self, image_url: str):
+    def __init__(self, image_bytes: bytes):
         super().__init__()
-        self.image_url = image_url
+        self.image_bytes = image_bytes
     
     @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         button.style = discord.ButtonStyle.gray
         button.disabled = True
-        await interaction.response.send_message(file=discord.File(self.image_url))
+        await interaction.response.send_message(file=discord.File(self.image_bytes))
         await interaction.followup.edit_message(interaction.message.id, view=self)
 
 class Tricks(commands.Cog):
@@ -65,7 +66,14 @@ class Tricks(commands.Cog):
 
     @commands.hybrid_command(name="surprise", description="Surprise someone with an image")
     async def surprise(self, ctx: commands.Context, image_url: str):
-        await ctx.send(f"There's a surprise for you!", view=SendImageView(image_url))
+        async with ctx.typing():
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as resp:
+                    if resp.status != 200:
+                        await ctx.send("Failed to download image.", ephemeral=True)
+                        return
+                    image_bytes = await resp.read()
+        await ctx.send(f"There's a surprise for you!", view=SendImageView(image_bytes))
 
 
 async def setup(bot):
