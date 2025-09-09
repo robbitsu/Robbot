@@ -11,6 +11,11 @@ class SendImageView(discord.ui.View):
         super().__init__()
         self.image_bytes = image_bytes
         self.spent = False
+        # Detect if the image is a GIF by checking the header
+        if image_bytes[:6] in (b'GIF87a', b'GIF89a'):
+            self.filename = "image.gif"
+        else:
+            self.filename = "image.png"
     
     @discord.ui.button(label="Surprise!", style=discord.ButtonStyle.primary, emoji="🎁")
     async def send_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -19,7 +24,7 @@ class SendImageView(discord.ui.View):
         self.spent = True
         button.style = discord.ButtonStyle.gray
         button.disabled = True
-        await interaction.response.send_message(file=discord.File(io.BytesIO(self.image_bytes), filename="image.png"))
+        await interaction.response.send_message(file=discord.File(io.BytesIO(self.image_bytes), filename=self.filename))
         await interaction.followup.edit_message(interaction.message.id, view=self)
 
 class Tricks(commands.Cog):
