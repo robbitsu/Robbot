@@ -100,10 +100,6 @@ class Tricks(commands.Cog):
                         await ctx.send("Failed to download image.", ephemeral=True)
                         return
                     image_bytes = await resp.read()
-                    # Verify that this is an image (or gif)
-                    if (not image_bytes.startswith(b'\x89PNG')) and (not image_bytes.startswith(b'GIF87a')) and (not image_bytes.startswith(b'GIF89a')):
-                        await ctx.send("This is not an image or GIF.", ephemeral=True)
-                        return
         await ctx.send(f"There's a surprise for you!", view=SendImageView(image_bytes))
 
 
