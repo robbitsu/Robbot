@@ -3,6 +3,7 @@
 import discord
 import os
 import sys
+import aiohttp
 from discord.ext import commands
 
 class Dev(commands.Cog):
@@ -71,6 +72,22 @@ class Dev(commands.Cog):
             await emoji.delete()
         
         await ctx.send("Emojis purged.", ephemeral=True)
+
+    @commands.hybrid_command(name="myip", description="Show the bot's public IPv4 address")
+    async def my_ip(self, ctx: commands.Context):
+        """Fetches and displays the bot's public IPv4 address using an external API. The message is ephemeral."""
+        
+        url = "https://api.ipify.org?format=json"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    data = await resp.json()
+                    ip = data.get("ip", "Unknown")
+                    await ctx.send(f"Public IPv4 address: `{ip}`", ephemeral=True)
+        except Exception as e:
+            await ctx.send(f"Failed to fetch IP address: {e}", ephemeral=True)
+
+    
         
 
 async def setup(bot):
