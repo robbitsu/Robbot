@@ -4,6 +4,7 @@ import discord
 import os
 import sys
 import aiohttp
+import boto3
 from discord.ext import commands
 
 class Dev(commands.Cog):
@@ -86,6 +87,63 @@ class Dev(commands.Cog):
                     await ctx.send(f"Public IPv4 address: `{ip}`", ephemeral=True)
         except Exception as e:
             await ctx.send(f"Failed to fetch IP address: {e}", ephemeral=True)
+
+    @commands.hybrid_command(name="update_dns", description="Update Route 53 record to current public IPv4 address using only environment variables.")
+    async def update_dns(self, ctx: commands.Context):
+        """
+        Update the Route 53 A record to the current public IPv4 address.
+        Requires env vars: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, ROUTE53_HOSTED_ZONE_ID, ROUTE53_RECORD_NAME
+        """
+        # Get current public IP
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://api.ipify.org?format=json") as resp:
+                    data = await resp.json()
+                    ip = data.get("ip")
+                    if not ip:
+                        await ctx.send("Could not get public IP.", ephemeral=True)
+                        return
+        except Exception as e:
+            await ctx.send(f"Failed to get public IP: {e}", ephemeral=True)
+            return
+
+        # Gather AWS creds and Route 53 vars from environment
+        aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+        aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        aws_region = os.getenv("AWS_REGION", "us-east-1")
+        record_name = os.getenv("ROUTE53_RECORD_NAME")
+        hosted_zone_id = os.getenv("ROUTE53_HOSTED_ZONE_ID")
+        if not (aws_access_key and aws_secret_key and record_name and hosted_zone_id):
+            await ctx.send("AWS credentials or Route 53 config (ROUTE53_RECORD_NAME, ROUTE53_HOSTED_ZONE_ID) not set in env vars.", ephemeral=True)
+            return
+
+        # Update Route 53
+        try:
+            client = boto3.client(
+                "route53",
+                region_name=aws_region,
+                aws_access_key_id=aws_access_key,
+                aws_secret_access_key=aws_secret_key,
+            )
+            response = client.change_resource_record_sets(
+                HostedZoneId=hosted_zone_id,
+                ChangeBatch={
+                    "Changes": [
+                        {
+                            "Action": "UPSERT",
+                            "ResourceRecordSet": {
+                                "Name": record_name,
+                                "Type": "A",
+                                "TTL": 300,
+                                "ResourceRecords": [{"Value": ip}],
+                            },
+                        }
+                    ]
+                },
+            )
+            await ctx.send(f"Updated {record_name} to {ip}. Change status: {response['ChangeInfo']['Status']}", ephemeral=True)
+        except Exception as e:
+            await ctx.send(f"Failed to update DNS: {e}", ephemeral=True)
 
     
         
